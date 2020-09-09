@@ -1,0 +1,16 @@
+version: "3"
+services:
+  testmetrics:
+    build: .
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - "POSTGRES_HOST=postgres"
+      - "POSTGRES_PORT=5432"
+    depends_on:
+      - "postgres"
+  postgres:
+    image: postgres:11.5
+    ports:
+      - "5432:5432"

@@ -1,0 +1,43 @@
+server:
+  applicationConnectors:
+    - type: http
+      port: 8080
+  adminConnectors:
+    - type: http
+      port: 8081
+  requestLog:
+    appenders:
+      - type: console
+        layout:
+          type: access-json
+          timestampFormat: "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        filterFactories:
+          - type: uri
+            uris:
+              - "/ping"
+              - "/healthcheck"
+              - "/metrics"
+logging:
+  level: INFO
+  appenders:
+    - type: console
+      layout:
+        type: json
+        timestampFormat: "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+  loggers:
+    net.leanix: INFO
+    liquibase.executor.jvm.JdbcExecutor: WARN
+    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: WARN
+database:
+  driverClass: org.postgresql.Driver
+  user: ${POSTGRES_USER:-postgres}
+  password: ${POSTGRES_PASSWORD:-}
+  url: jdbc:postgresql://${POSTGRES_HOST:-dockerhost}:${POSTGRES_PORT:-5432}/${POSTGRES_DATABASE:-postgres}
+  defaultTransactionIsolation: read-committed
+  properties:
+    charSet: UTF-8
+  maxWaitForConnection: 1s
+  validationQuery: "/* testmetrics database health check */ SELECT 1"
+  initialSize: 1
+  minSize: 1
+  maxSize: ${POSTGRES_POOL_SIZE:-2}

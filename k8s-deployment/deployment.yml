@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  labels:
+    app: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      annotations:
+        "cluster-autoscaler.kubernetes.io/safe-to-evict": "true"
+      labels:
+        app: app
+    spec:
+      containers:
+        - name: testmetrics
+          image: "maikschwan/testmetrics:latest"
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "1"
+            limits:
+              memory: "1Gi"
+              cpu: "2"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: "/healthcheck"
+              port: 8081
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 4
+          env:
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: postgres
+                key: user
+          - name: POSTGRES_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: postgres
+                key: database
+          - name: POSTGRES_HOST
+            valueFrom:
+              secretKeyRef:
+                name: postgres
+                key: host
+          - name: POSTGRES_PORT
+            valueFrom:
+              secretKeyRef:
+                name: postgres
+                key: port
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres
+                key: password
+          - name: JAVA_OPTS
+            value: "-XX:InitialRAMPercentage=80.0 -XX:MaxRAMPercentage=80.0"
+          - name: POSTGRES_POOL_SIZE
+            value: "4"
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: rw-volume
+              mountPath: /tmp
+      volumes:
+        - name: rw-volume
+          emptyDir: {}
+      serviceAccountName: regcred
